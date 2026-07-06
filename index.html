@@ -1,0 +1,184 @@
+ <!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BudgetWise — Smart Budgeting Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="logo">💰</div><div><h1>BudgetWise</h1><p>Smart Budgeting</p></div></div>
+    <ul class="nav-links">
+      <li><a href="#" data-view="dashboard" class="active"><span class="icon">📊</span> Dashboard</a></li>
+      <li><a href="#" data-view="budget-setup"><span class="icon">⚙️</span> Budget Setup</a></li>
+      <li><a href="#" data-view="expenses"><span class="icon">💸</span> Expenses</a></li>
+      <li><a href="#" data-view="history"><span class="icon">📅</span> History</a></li>
+    </ul>
+  </aside>
+  <main class="main-content">
+    <section class="view active" id="view-dashboard">
+      <div class="page-header"><h2>Dashboard</h2><p id="dashboard-month-label"></p></div>
+      <div id="dashboard-content"></div>
+      <div id="budget-warnings"></div>
+      <div id="dashboard-empty" class="empty-state" style="display:none"><div class="empty-icon">📋</div><h3>No Budget
+  Set Up Yet</h3><p>Set up your monthly allowance and budget categories to get started.</p><button class="btn
+  btn-primary" onclick="navigateTo('budget-setup')">Set Up Budget</button></div>
+    </section>
+    <section class="view" id="view-budget-setup">
+      <div class="page-header"><h2>Budget Setup</h2><p>Set your monthly allowance and customize spending
+  categories</p></div>
+      <div class="card">
+        <div class="card-header"><h3>Monthly Allowance</h3></div>
+        <div class="allowance-section"><div class="allowance-input-wrapper"><span class="currency">₱</span><input
+  type="number" id="allowance-input" placeholder="0.00" min="0" step="100"></div></div>
+        <div class="card-header" style="margin-top:2rem"><h3>Budget Categories</h3><button class="btn btn-outline
+  btn-sm" onclick="addCategory()">+ Add</button></div>
+        <div class="categories-list" id="categories-list"></div>
+        <div class="percentage-total" id="percentage-total"><span>Total: </span><span
+  id="percentage-value">100%</span></div>
+        <button class="btn btn-primary" onclick="saveBudgetSetup()">💾 Save Budget</button>
+      </div>
+    </section>
+    <section class="view" id="view-expenses">
+      <div class="page-header"><h2>Expense Tracker</h2><p>Log and manage your expenses</p></div>
+      <div class="card expense-form-card">
+        <div class="card-header"><h3>Add New Expense</h3></div>
+        <form id="expense-form" onsubmit="handleAddExpense(event)">
+          <div class="form-row"><div class="form-group"><label>Amount (₱)</label><input type="number"
+  id="expense-amount" placeholder="0.00" min="0.01" step="0.01" required></div><div
+  class="form-group"><label>Category</label><select id="expense-category" required><option
+  value="">Select...</option></select></div></div>
+          <div class="form-row"><div class="form-group"><label>Description</label><input type="text"
+  id="expense-description" placeholder="What was this for?" required></div><div
+  class="form-group"><label>Date</label><input type="date" id="expense-date" required></div></div>
+          <button type="submit" class="btn btn-success">+ Add Expense</button>
+           <div id="expense-block-msg" style="display:none"></div>
+        </form>
+      </div>
+      <div class="card"><div class="card-header"><h3>Expenses This Month</h3><span id="expenses-count-label"
+  style="font-size:.85rem;color:var(--text-light)">0</span></div><div id="expenses-list-content"></div><div
+  id="expenses-empty" class="empty-state" style="display:none"><div class="empty-icon">🧾</div><h3>No Expenses
+  Yet</h3><p>Start logging above.</p></div></div>
+    </section>
+    <section class="view" id="view-history">
+      <div class="page-header"><h2>Budget History</h2><p>View and compare past months</p></div>
+      <div id="history-content"></div>
+      <div id="history-empty" class="empty-state" style="display:none"><div class="empty-icon">📅</div><h3>No History
+  Yet</h3><p>History appears after your first month.</p></div>
+    </section>
+  </main>
+  
+  <!-- Onboarding Modal -->
+  <div class="modal-overlay" id="welcome-modal">
+    <div class="modal">
+      <div class="onboarding-step active" id="step-1">
+        <div class="welcome-icon">👋</div>
+        <h2>Welcome to BudgetWise!</h2>
+        <p>Let's personalize your budget. How much is your monthly allowance or income?</p>
+        <div class="form-group">
+          <label for="welcome-allowance">Monthly Allowance / Income (₱)</label>
+          <input type="number" id="welcome-allowance" placeholder="e.g. 15000" min="0" step="100">
+        </div>
+        <button class="btn btn-primary" onclick="onboardingNext(1)" style="width:100%">Next →</button>
+      </div>
+
+      <div class="onboarding-step" id="step-2">
+        <div class="welcome-icon">🧑‍💼</div>
+        <h2>What's your current status?</h2>
+        <p>This helps us tailor your budget categories.</p>
+        <div class="onboarding-options" id="options-status">
+          <button class="option-btn" onclick="selectOption('status','student',this)">🎓 Student</button>
+          <button class="option-btn" onclick="selectOption('status','working',this)">💼 Working Professional</button>
+          <button class="option-btn" onclick="selectOption('status','family',this)">👨‍👩‍👧 Have a Family</button>
+        </div>
+        <button class="btn btn-primary" onclick="onboardingNext(2)" style="width:100%;margin-top:1.5rem" id="btn-step-2"
+   disabled>Next →</button>
+      </div>
+
+      <div class="onboarding-step" id="step-3">
+        <div class="welcome-icon">🏠</div>
+        <h2>What's your living situation?</h2>
+        <p>Housing impacts your budget structure significantly.</p>
+        <div class="onboarding-options" id="options-living">
+          <button class="option-btn" onclick="selectOption('living','with-parents',this)">👨‍👩‍👦 Living with
+  Parents</button>
+          <button class="option-btn" onclick="selectOption('living','independent',this)">🏢 Living
+  Independently</button>
+          <button class="option-btn" onclick="selectOption('living','own-family',this)">🏡 With Own Family</button>
+        </div>
+        <button class="btn btn-primary" onclick="onboardingNext(3)" style="width:100%;margin-top:1.5rem" id="btn-step-3"
+   disabled>Next →</button>
+      </div>
+
+      <div class="onboarding-step" id="step-4">
+        <div class="welcome-icon">🎯</div>
+        <h2>What's your top financial priority?</h2>
+        <p>We'll adjust your savings and spending split based on this.</p>
+        <div class="onboarding-options" id="options-priority">
+          <button class="option-btn" onclick="selectOption('priority','save-aggressively',this)">🏦 Save
+  Aggressively</button>
+          <button class="option-btn" onclick="selectOption('priority','balanced',this)">⚖️ Balanced Lifestyle</button>
+          <button class="option-btn" onclick="selectOption('priority','pay-debt',this)">💳 Pay Off Debt</button>
+          <button class="option-btn" onclick="selectOption('priority','enjoy-life',this)">🎉 Enjoy Life Now</button>
+        </div>
+        <button class="btn btn-primary" onclick="onboardingNext(4)" style="width:100%;margin-top:1.5rem" id="btn-step-4"
+   disabled>Next →</button>
+      </div>
+
+      <div class="onboarding-step" id="step-5">
+        <div class="welcome-icon">🚗</div>
+        <h2>How do you commute?</h2>
+        <p>Transportation costs vary a lot — this helps us estimate yours.</p>
+        <div class="onboarding-options" id="options-transport">
+          <button class="option-btn" onclick="selectOption('transport','walk-bike',this)">🚶 Walk / Bike</button>
+          <button class="option-btn" onclick="selectOption('transport','public',this)">🚌 Public Transit</button>
+          <button class="option-btn" onclick="selectOption('transport','own-vehicle',this)">🚗 Own Vehicle</button>
+          <button class="option-btn" onclick="selectOption('transport','rideshare',this)">🚕 Grab / Rideshare</button>
+        </div>
+        <button class="btn btn-primary" onclick="onboardingNext(5)" style="width:100%;margin-top:1.5rem" id="btn-step-5"
+   disabled>Next →</button>
+      </div>
+
+      <div class="onboarding-step" id="step-6">
+        <div class="welcome-icon">🍽️</div>
+        <h2>How do you usually eat?</h2>
+        <p>Food is typically the biggest variable expense.</p>
+        <div class="onboarding-options" id="options-meals">
+          <button class="option-btn" onclick="selectOption('meals','home-cook',this)">🍳 Mostly Home-cooked</button>
+          <button class="option-btn" onclick="selectOption('meals','mixed',this)">🍱 Mix of Home & Eating Out</button>
+          <button class="option-btn" onclick="selectOption('meals','eat-out',this)">🍕 Mostly Eat Out /
+  Delivery</button>
+        </div>
+        <button class="btn btn-primary" onclick="onboardingNext(6)" style="width:100%;margin-top:1.5rem" id="btn-step-6"
+   disabled>Next →</button>
+      </div>
+
+      <div class="onboarding-step" id="step-7">
+        <div class="welcome-icon">✨</div>
+        <h2>Your Personalized Budget is Ready!</h2>
+        <p>Based on your answers, we've created a custom budget tailored to your lifestyle.</p>
+        <div id="onboarding-summary" class="onboarding-summary"></div>
+        <button class="btn btn-primary" onclick="finishOnboarding()" style="width:100%;margin-top:1.5rem">Start
+  Budgeting 🚀</button>
+      </div>
+
+      <div class="onboarding-progress">
+        <span class="dot active" data-step="1"></span>
+        <span class="dot" data-step="2"></span>
+        <span class="dot" data-step="3"></span>
+        <span class="dot" data-step="4"></span>
+        <span class="dot" data-step="5"></span>
+        <span class="dot" data-step="6"></span>
+        <span class="dot" data-step="7"></span>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+  </body>
+  </html>
